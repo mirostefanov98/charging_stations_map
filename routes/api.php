@@ -31,6 +31,8 @@ Route::middleware('auth:sanctum')->prefix('user')->group(function () {
 
 Route::prefix('station')->group(function () {
     Route::get('/filters', [ChargingStationController::class, 'filters']);
+    Route::get('/{id}', [ChargingStationController::class, 'getStation']);
     Route::post('/create', [ChargingStationController::class, 'create'])->middleware('auth:sanctum');
-    Route::get('/{id}', [ChargingStationController::class, 'getLocation']);
+    Route::post('/like', [ChargingStationController::class, 'likeStation'])->middleware('auth:sanctum');
+    Route::post('/dislike', [ChargingStationController::class, 'dislikeStation'])->middleware('auth:sanctum');
 });

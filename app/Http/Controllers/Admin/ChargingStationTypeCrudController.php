@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ChargingStationTypeRequest;
+use App\Http\Requests\ChargingStationTypeUpdateRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
@@ -39,7 +40,17 @@ class ChargingStationTypeCrudController extends CrudController
      */
     protected function setupListOperation()
     {
-        CRUD::column('name');
+        $this->crud->addColumn('name');
+
+        $this->crud->addColumn([
+            'name'      => 'image_path', // The db column name
+            'label'     => 'Image', // Table column heading
+            'type'      => 'image',
+            'disk'   => 'public',
+            'height' => '45px',
+            'width'  => '28px',
+        ],);
+
         // CRUD::column('created_at');
         // CRUD::column('updated_at');
 
@@ -60,7 +71,17 @@ class ChargingStationTypeCrudController extends CrudController
     {
         CRUD::setValidation(ChargingStationTypeRequest::class);
 
-        CRUD::field('name');
+        $this->crud->addField('name');
+        $this->crud->addField([
+            'name'      => 'image_path',
+            'label'     => 'Image',
+            'type'      => 'upload',
+            'upload'    => true,
+            'disk'    => 'public',
+            'attributes' => [
+                'accept' => 'image/*',
+            ],
+        ]);
 
         /**
          * Fields can be defined using the fluent syntax or array syntax:
@@ -77,6 +98,33 @@ class ChargingStationTypeCrudController extends CrudController
      */
     protected function setupUpdateOperation()
     {
-        $this->setupCreateOperation();
+        CRUD::setValidation(ChargingStationTypeUpdateRequest::class);
+
+        $this->crud->addField('name');
+        $this->crud->addField([
+            'name'      => 'image_path',
+            'label'     => 'Image',
+            'type'      => 'upload',
+            'upload'    => true,
+            'disk'    => 'public',
+            'attributes' => [
+                'accept' => 'image/*',
+            ],
+        ]);
+    }
+
+    protected function setupShowOperation()
+    {
+        $this->crud->addColumn('name');
+        $this->crud->addColumn([
+            'name'      => 'image_path', // The db column name
+            'label'     => 'Image', // Table column heading
+            'type'      => 'image',
+            'disk'   => 'public',
+            'height' => '45px',
+            'width'  => '28px',
+        ]);
+        $this->crud->addColumn('created_at');
+        $this->crud->addColumn('updated_at');
     }
 }

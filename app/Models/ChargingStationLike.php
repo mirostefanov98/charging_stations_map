@@ -35,6 +35,12 @@ class ChargingStationLike extends Model
     |--------------------------------------------------------------------------
     */
 
+    // One-Many inverse
+    public function chargingStation()
+    {
+        return $this->belongsTo(ChargingStation::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SCOPES

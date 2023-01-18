@@ -3,9 +3,8 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
-class ChargingStationTypeResource extends JsonResource
+class UserResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,8 +16,8 @@ class ChargingStationTypeResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => strtoupper($this->name),
-            'image_path' => Storage::disk('public')->url($this->image_path)
+            'name' => $this->name,
+            'email' => $this->email,
         ];
     }
 }

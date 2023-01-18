@@ -44,6 +44,16 @@ class ChargingStation extends Model
         });
     }
 
+    public function getLikes()
+    {
+        return $this->likes()->where('like_type', true)->count();
+    }
+
+    public function getDislikes()
+    {
+        return $this->likes()->where('like_type', false)->count();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | RELATIONS
@@ -77,13 +87,7 @@ class ChargingStation extends Model
     // One-Many
     public function likes()
     {
-        return $this->hasMany(ChargingStationLike::class)->where('like_type', 'true')->count();
-    }
-
-    // One-Many
-    public function dislikes()
-    {
-        return $this->hasMany(ChargingStationLike::class)->where('like_type', 'false')->count();
+        return $this->hasMany(ChargingStationLike::class);
     }
 
     /*

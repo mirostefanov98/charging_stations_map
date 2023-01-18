@@ -68,7 +68,7 @@ class UserController extends Controller
     {
         $user = User::find(Auth::guard('sanctum')->id());
 
-        $chargingStations = $user->chargingStations()->get();
+        $chargingStations = $user->chargingStations()->latest()->get();
 
         return UserStationResource::collection($chargingStations);
     }

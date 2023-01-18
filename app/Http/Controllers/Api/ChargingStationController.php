@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChargingStationResource;
 use App\Models\ChargingStation;
+use App\Models\ChargingStationLike;
 use App\Models\ChargingStationType;
 use App\Models\PaymentType;
 use App\Models\PlugType;
@@ -74,7 +75,7 @@ class ChargingStationController extends Controller
         ], 200);
     }
 
-    public function getLocation(Request $request, $id)
+    public function getStation(Request $request, $id)
     {
         $station = ChargingStation::find($id);
 
@@ -84,6 +85,114 @@ class ChargingStationController extends Controller
             ], 404);
         }
 
+        $stationUser = $station->user;
+
+        $authUser = Auth::guard('sanctum')->user();
+
+        if ($authUser) {
+            if ($stationUser->id === $authUser->id) {
+                return new ChargingStationResource($station);
+            }
+        }
+
+        if (!$station->publish) {
+            return response([
+                'message' => "Charging station with id: {$id} not found.",
+            ], 404);
+        }
+
         return new ChargingStationResource($station);
+    }
+
+    public function likeStation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'charging_station_id' => 'required|exists:charging_stations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        $validated = $validator->validated();
+
+        $userId = Auth::guard('sanctum')->id();
+
+        $like = ChargingStationLike::where('charging_station_id', $validated['charging_station_id'])
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($like) {
+            if ($like->like_type) {
+                $like->delete();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Remove like Successfully',
+                ], 200);
+            } else {
+                $like->delete();
+            }
+        }
+
+        $like = new ChargingStationLike();
+        $like->charging_station_id = $validated['charging_station_id'];
+        $like->user_id = $userId;
+        $like->like_type = true;
+        $like->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Add like Successfully',
+        ], 200);
+    }
+
+    public function dislikeStation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'charging_station_id' => 'required|exists:charging_stations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        $validated = $validator->validated();
+
+        $userId = Auth::guard('sanctum')->id();
+
+        $dislike = ChargingStationLike::where('charging_station_id', $validated['charging_station_id'])
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($dislike) {
+            if (!$dislike->like_type) {
+                $dislike->delete();
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Remove dislike Successfully',
+                ], 200);
+            } else {
+                $dislike->delete();
+            }
+        }
+
+        $dislike = new ChargingStationLike();
+        $dislike->charging_station_id = $validated['charging_station_id'];
+        $dislike->user_id = $userId;
+        $dislike->like_type = false;
+        $dislike->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Add dislike Successfully',
+        ], 200);
     }
 }

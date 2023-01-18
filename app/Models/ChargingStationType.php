@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class ChargingStationType extends Model
 {
@@ -28,6 +29,14 @@ class ChargingStationType extends Model
     | FUNCTIONS
     |--------------------------------------------------------------------------
     */
+
+    public static function boot()
+    {
+        parent::boot();
+        static::deleting(function ($obj) {
+            Storage::disk('public')->delete($obj->image_path);
+        });
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -58,4 +67,13 @@ class ChargingStationType extends Model
     | MUTATORS
     |--------------------------------------------------------------------------
     */
+
+    public function setImagePathAttribute($value)
+    {
+        $attribute_name = "image_path";
+        $disk = "public";
+        $destination_path = "images/charging_station_types";
+
+        $this->uploadFileToDisk($value, $attribute_name, $disk, $destination_path);
+    }
 }

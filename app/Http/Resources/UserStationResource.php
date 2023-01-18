@@ -16,12 +16,12 @@ class UserStationResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
+            'user' => new UserResource($this->user),
             'name' => $this->name,
             'images' => ChargingStationImagesResource::collection($this->images),
-            'charging_station_type' => new ChargingStationTypeResource($this->chargingStationType()->first()),
-            'likes' => $this->likes(),
-            'dislike' => $this->dislikes(),
+            'charging_station_type' => new ChargingStationTypeResource($this->chargingStationType),
+            'likes' => $this->getLikes(),
+            'dislikes' => $this->getDislikes(),
             'publish' => (bool) $this->publish,
             'created_at' => $this->created_at,
         ];

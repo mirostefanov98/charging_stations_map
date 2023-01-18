@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ChargingStationTypeRequest extends FormRequest
+class ChargingStationTypeUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,7 +26,7 @@ class ChargingStationTypeRequest extends FormRequest
     {
         return [
             'name' => 'required|max:50|unique:charging_station_types,name,' . $this->id,
-            'image_path' => 'required|image|max:2048',
+            'image_path' => 'image|max:2048',
         ];
     }
 
