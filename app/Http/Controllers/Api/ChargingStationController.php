@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChargingStationResource;
+use App\Http\Resources\MapStationResource;
 use App\Models\ChargingStation;
 use App\Models\ChargingStationLike;
 use App\Models\ChargingStationType;
 use App\Models\PaymentType;
 use App\Models\PlugType;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -37,8 +39,10 @@ class ChargingStationController extends Controller
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'charging_station_type_id' => 'required|exists:charging_station_types,id',
-            'plug_types' => 'required',
-            'payment_types' => 'required',
+            'plug_types' => 'required|array',
+            'plug_types.*' => 'exists:plug_types,id',
+            'payment_types' => 'required|array',
+            'payment_types.*' => 'exists:payment_types,id',
             'images' => 'required|array|max:5',
             'images.*' => 'image|max:2048',
         ]);
@@ -194,5 +198,73 @@ class ChargingStationController extends Controller
             'status' => true,
             'message' => 'Add dislike Successfully',
         ], 200);
+    }
+
+    public function getStations(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'radius' => 'numeric|between:1,500',
+            'latitude' => 'required_with:radius|numeric|between:-90,90',
+            'longitude' => 'required_with:radius|numeric|between:-180,180',
+            'charging_station_types' => 'array',
+            'charging_station_types.*' => 'exists:charging_station_types,id',
+            'plug_types' => 'array',
+            'plug_types.*' => 'exists:plug_types,id',
+            'payment_types' => 'array',
+            'payment_types.*' => 'exists:payment_types,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 401);
+        }
+
+        $query = ChargingStation::where('publish', true);
+
+        if ($request->radius) {
+            $radius = $request->radius;
+            $latitude = $request->latitude;
+            $longitude = $request->longitude;
+
+            $query->select('*')
+                ->selectRaw('( 6371 * acos( cos( radians(?) ) *
+                                    cos( radians( latitude ) )
+                                    * cos( radians( longitude ) - radians(?)
+                                    ) + sin( radians(?) ) *
+                                    sin( radians( latitude ) ) )
+                                  ) AS distance', [$latitude, $longitude, $latitude])
+                ->havingRaw("distance < ?", [$radius])
+                ->orderBy('distance', 'asc');
+        }
+
+        if ($request->charging_station_types) {
+            $charging_station_types = $request->charging_station_types;
+
+            $query->whereHas('chargingStationType', function (Builder $query) use ($charging_station_types) {
+                $query->whereIn('id', $charging_station_types);
+            });
+        }
+
+        if ($request->plug_types) {
+            $plugs = $request->plug_types;
+
+            $query->whereHas('plugTypes', function (Builder $query) use ($plugs) {
+                $query->whereIn('plug_type_id', $plugs);
+            });
+        }
+
+        if ($request->payment_types) {
+            $payment_type = $request->payment_types;
+
+            $query->whereHas('paymentTypes', function (Builder $query) use ($payment_type) {
+                $query->whereIn('payment_type_id', $payment_type);
+            });
+        }
+
+        $chargingStations = $query->get();
+
+        return MapStationResource::collection($chargingStations);
     }
 }
